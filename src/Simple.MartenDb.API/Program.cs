@@ -1,5 +1,8 @@
+using JasperFx.Core;
 using Marten;
+using Marten.Events.Projections;
 using Simple.MartenDb.API.Endpoints;
+using Simple.MartenDb.API.Projection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +15,8 @@ builder.Services.AddMarten(options =>
 {
     const string connectionString = "host=localhost;port=5432;database=cars;username=sa;password=MySecretPassword1234;";
     options.Connection(connectionString);
+    options.Projections.Add(new CarMaintenanceEventProjection(), ProjectionLifecycle.Async);
+
 });
 
 

@@ -10,7 +10,7 @@ public static class EventEndpoint
 {
     public static void AddEventsEnpoint(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/CreateCar", async (IDocumentStore store) =>
+        app.MapPost("CreateCar", async (IDocumentStore store) =>
         {
             Guid carId = Guid.NewGuid();
 
@@ -21,7 +21,7 @@ public static class EventEndpoint
             return carId;
         });
 
-        app.MapPut("/UpdateLocation/{carId}", async ([FromBody] UpdateLocationRequest request, Guid carId, IDocumentStore store) =>
+        app.MapPut("UpdateLocation/{carId}", async ([FromBody] UpdateLocationRequest request, Guid carId, IDocumentStore store) =>
         {
             using var session = await store.LightweightSerializableSessionAsync();
             session.Events.Append(carId, request);
@@ -33,6 +33,21 @@ public static class EventEndpoint
         {
             return await querySession.Events.AggregateStreamAsync<CarAggregateEntity>(carId);
         }).WithOpenApi();
+
+
+        app.MapPut("CarMaintenance", async ([FromBody] CarMaintenanceEvent request, IDocumentStore store) =>
+        {
+            using var session = await store.LightweightSerializableSessionAsync();
+            session.Events.Append(request.CarId, request);
+            await session.SaveChangesAsync();
+        });
+
+        app.MapDelete("CarMaintenance", async ([FromBody] RemoveCarMaintenance request, IDocumentStore store) =>
+        {
+            using var session = await store.LightweightSerializableSessionAsync();
+            session.Events.Append(request.CarId, request);
+            await session.SaveChangesAsync();
+        });
 
     }
 
