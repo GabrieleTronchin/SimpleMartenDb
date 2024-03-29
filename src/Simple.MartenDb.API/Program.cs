@@ -1,7 +1,5 @@
 using Marten;
-using Microsoft.AspNetCore.Mvc;
-using Simple.MartenDb.API.Entities;
-using Simple.MartenDb.API.Models;
+using Simple.MartenDb.API.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,30 +24,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+var events = app.MapGroup("/events");
+events.AddEventsEnpoint();
 
-
-app.MapPost("/CreateCar", async (IDocumentStore store) =>
-{
-    Guid carId = Guid.NewGuid();
-
-    using var session = await store.LightweightSerializableSessionAsync();
-    session.Events.StartStream(carId, new UpdateLocationRequest() { Latitute = 0, Longitude = 0 }); // a stream cannot start without an event
-    await session.SaveChangesAsync();
-
-    return carId;
-});
-
-app.MapPut("/UpdateLocation/{carId}", async ([FromBody] UpdateLocationRequest request, Guid carId, IDocumentStore store) =>
-{
-    using var session = await store.LightweightSerializableSessionAsync();
-    session.Events.Append(carId, request);
-    await session.SaveChangesAsync();
-});
-
-
-app.MapGet("LiveAggregation/{carId}", async (Guid carId, IQuerySession querySession) =>
-{
-    return await querySession.Events.AggregateStreamAsync<CarAggregateEntity>(carId);
-}).WithOpenApi();
+var crud = app.MapGroup("/crud");
+crud.AddCrudEnpoint();
 
 app.Run();
