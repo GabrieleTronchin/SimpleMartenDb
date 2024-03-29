@@ -12,6 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddMarten(options =>
+{
+    const string connectionString = "host=localhost;port=5432;database=cars;username=sa;password=MySecretPassword1234;";
+    options.Connection(connectionString);
+    //options.Projections.Add<OrderAggregateProjection>(ProjectionLifecycle.Async);
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -21,13 +29,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-builder.Services.AddMarten(options =>
-{
-    //TODO Move connection string on Appsettings
-    const string connectionString = "host=localhost;port=5432;database=cars;username=sa;password=MySecretPassword1234;";
-    options.Connection(connectionString);
-    //options.Projections.Add<OrderAggregateProjection>(ProjectionLifecycle.Async);
-});
 
 
 app.MapPost("/CreateCar", async (IDocumentStore store) =>
