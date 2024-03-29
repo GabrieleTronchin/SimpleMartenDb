@@ -1,9 +1,7 @@
-using EventSource.Domain.OrderAggregate;
-using EventSource.Presentation.Rider.Events;
 using Marten;
-using Marten.Internal.Sessions;
-using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Mvc;
+using Simple.MartenDb.API.Entities;
+using Simple.MartenDb.API.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +14,6 @@ builder.Services.AddMarten(options =>
 {
     const string connectionString = "host=localhost;port=5432;database=cars;username=sa;password=MySecretPassword1234;";
     options.Connection(connectionString);
-    //options.Projections.Add<OrderAggregateProjection>(ProjectionLifecycle.Async);
 });
 
 
@@ -36,7 +33,7 @@ app.MapPost("/CreateCar", async (IDocumentStore store) =>
     Guid carId = Guid.NewGuid();
 
     using var session = await store.LightweightSerializableSessionAsync();
-    session.Events.StartStream(carId, new UpdateLocationRequest() { Latitute =0, Longitude=0}); // a stream cannot start without an event
+    session.Events.StartStream(carId, new UpdateLocationRequest() { Latitute = 0, Longitude = 0 }); // a stream cannot start without an event
     await session.SaveChangesAsync();
 
     return carId;
@@ -50,7 +47,7 @@ app.MapPut("/UpdateLocation/{carId}", async ([FromBody] UpdateLocationRequest re
 });
 
 
-app.MapGet("Live/{carId}", async (Guid carId, IQuerySession querySession) =>
+app.MapGet("LiveAggregation/{carId}", async (Guid carId, IQuerySession querySession) =>
 {
     return await querySession.Events.AggregateStreamAsync<CarAggregateEntity>(carId);
 }).WithOpenApi();

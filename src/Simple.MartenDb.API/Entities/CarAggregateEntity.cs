@@ -1,6 +1,6 @@
-﻿using EventSource.Presentation.Rider.Events;
+﻿using Simple.MartenDb.API.Models;
 
-namespace EventSource.Domain.OrderAggregate;
+namespace Simple.MartenDb.API.Entities;
 
 public class CarAggregateEntity
 {

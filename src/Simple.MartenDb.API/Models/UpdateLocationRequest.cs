@@ -1,4 +1,4 @@
-﻿namespace EventSource.Presentation.Rider.Events
+﻿namespace Simple.MartenDb.API.Models
 {
     public record UpdateLocationRequest
     {
