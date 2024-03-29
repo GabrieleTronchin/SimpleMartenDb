@@ -1,8 +1,8 @@
-using JasperFx.Core;
 using Marten;
+using Marten.Events.Daemon.Resiliency;
 using Marten.Events.Projections;
 using Simple.MartenDb.API.Endpoints;
-using Simple.MartenDb.API.Projection;
+using Simple.MartenDb.API.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +16,12 @@ builder.Services.AddMarten(options =>
     const string connectionString = "host=localhost;port=5432;database=cars;username=sa;password=MySecretPassword1234;";
     options.Connection(connectionString);
     options.Projections.Add(new CarMaintenanceEventProjection(), ProjectionLifecycle.Async);
+    options.Projections.Add(new CarDistanceProjection(), ProjectionLifecycle.Async);
+    //_.Projections.Snapshot<QuestParty>(SnapshotLifecycle.Inline);
 
-});
+})
+// Turn on the async daemon in "Solo" mode
+.AddAsyncDaemon(DaemonMode.Solo);
 
 
 var app = builder.Build();

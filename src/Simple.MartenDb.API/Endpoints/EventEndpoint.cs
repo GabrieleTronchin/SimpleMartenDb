@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Simple.MartenDb.API.Entities;
 using Simple.MartenDb.API.Models;
+using Simple.MartenDb.API.Projections;
 
 
 namespace Simple.MartenDb.API.Endpoints;
@@ -34,6 +35,11 @@ public static class EventEndpoint
             return await querySession.Events.AggregateStreamAsync<CarAggregateEntity>(carId);
         }).WithOpenApi();
 
+        app.MapGet("CurrentPosition/{carId}", async (Guid carId, IQuerySession querySession) =>
+        {
+            return await querySession.LoadAsync<CurrentCarPosition>(carId);
+        }).WithOpenApi();
+
 
         app.MapPut("CarMaintenance", async ([FromBody] CarMaintenanceEvent request, IDocumentStore store) =>
         {
@@ -49,6 +55,10 @@ public static class EventEndpoint
             await session.SaveChangesAsync();
         });
 
+        app.MapGet("CarMaintenance/{carId}", async (Guid carId, IQuerySession querySession) =>
+        {
+            return await querySession.LoadAsync<CarMaintenaceEntity>(carId);
+        }).WithOpenApi();
     }
 
 }
