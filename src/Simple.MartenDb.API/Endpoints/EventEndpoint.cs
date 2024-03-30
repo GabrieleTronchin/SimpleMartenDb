@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Simple.MartenDb.API.Entities;
 using Simple.MartenDb.API.Models;
-using Simple.MartenDb.API.Projections;
 
 
 namespace Simple.MartenDb.API.Endpoints;

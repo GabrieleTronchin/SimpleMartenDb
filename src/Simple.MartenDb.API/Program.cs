@@ -2,7 +2,6 @@ using Marten;
 using Marten.Events.Daemon.Resiliency;
 using Marten.Events.Projections;
 using Simple.MartenDb.API.Endpoints;
-using Simple.MartenDb.API.Entities;
 using Simple.MartenDb.API.Projections;
 
 var builder = WebApplication.CreateBuilder(args);
