@@ -51,7 +51,7 @@ Open the admin page and follow the steps to create a database.
 
 ## MartenDb Setup
 
-Here how to make the first configuration of marten:
+Here's how to configure Marten for the first time:
 
 ```csharp
 builder.Services.AddMarten(options =>
@@ -63,8 +63,10 @@ builder.Services.AddMarten(options =>
 
 ## Database Interaction
 
-IQuerySession: for read operation
-IDocumentStore: for write operation
+MartenDB offers two ways to communicate with the database:
+
+- IQuerySession:  for read operations. For more info, check [here](https://martendb.io/documents/querying/linq/)
+- IDocumentStore: for write operations. For more info, check[here](https://martendb.io/documents/sessions.html)
 
 
 ### CRUD Endpoints
@@ -134,21 +136,92 @@ await querySession.Events.AggregateStreamAsync<CarAggregateEntity>(carId);
 
 ### Projections
 
-How to setup projection on mattern:
+Projections are responsible for materializing views of the application's state based on the events in the event store. These views represent the current state of specific entities or aspects of the system.
+
+A breaf explaination about Projection Lifecycles in Marten:
+
+- Inline Projections are executed at the time of event capture and in the same unit of work to persist the projected documents
+- Live Aggregations are executed on demand by loading event data and creating the projected view in memory without persisting the projected documents
+- Asynchronous Projections are executed by a background process (eventual consistency)
+
+More info [here](https://martendb.io/events/projections/)
+
+In this project, there are two sample projections:
+
+CurrentCarPositionEventProjection
+
+```csharp
+public class CurrentCarPositionEventProjection : EventProjection
+{
+    public CurrentCarPositionEventProjection()
+    {
+        ProjectionName = "CarActualLocation";
+    }
+
+
+    public CurrentCarPosition Create(UpdateLocationRequest lastLocation, IEvent e)
+    {
+        return new CurrentCarPosition(e.Id, new Location(lastLocation.Longitude, lastLocation.Latitute));
+    }
+}
+```
+
+
+CarMaintenanceEventProjection
+
+Use a projection to handle the entity:
+
+```csharp
+public class CarMaintenanceEventProjection : EventProjection
+{
+
+    public async Task Project(CarMaintenanceEvent evt, IDocumentOperations ops)
+    {
+        var doc = await ops.LoadAsync<CarMaintenaceEntity>(evt.CarId);
+        doc ??= new()
+        {
+            CarId = evt.CarId,
+        };
+
+        var todo = doc.MaintainacePlanTodo.SingleOrDefault(x => x.Id == evt.Id);
+        if (todo == null)
+        {
+            doc.MaintainacePlanTodo.Add(new MaintenaceEntity
+            {
+                Id = evt.Id,
+                Name = evt.Name,
+                Description = evt.Description,
+            });
+        }
+        else
+        {
+            todo.Checked = evt.Checked;
+        }
+
+        ops.Store(doc);
+    }
+
+    public async Task Project(RemoveCarMaintenance evt, IDocumentOperations ops)
+    {
+        var doc = await ops.LoadAsync<CarMaintenaceEntity>(evt.CarId);
+
+        doc.MaintainacePlanTodo.RemoveAll(x => x.Id == evt.Id);
+
+        ops.Store(doc);
+    }
+
+}
+```
+
+How to set up projection on Marten:
 
 ```csharp
 builder.Services.AddMarten(options =>
 {
     const string connectionString = "host=localhost;port=5432;database=cars;username=sa;password=MySecretPassword1234;";
     options.Connection(connectionString);
-    options.Projections.Add(new CarMaintenanceEventProjection(), ProjectionLifecycle.Async);
+    options.Projections.Add(new CarMaintenanceEventProjection(), ProjectionLifecycle.Inline);
     options.Projections.Add(new CurrentCarPositionEventProjection(), ProjectionLifecycle.Async);
 })
 .AddAsyncDaemon(DaemonMode.Solo);
 ```
-
-//TODO Add explaination about AddAsyncDaemon
-
-//TODO Add sample of projection flow
-
-
