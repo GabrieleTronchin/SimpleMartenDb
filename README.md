@@ -50,9 +50,16 @@ Open the admin page and follow the steps to create a database.
 
 # Code Explaination
 
+
+The following chapter will provide you with a deeper understanding of what you discovered within this project.
+
+
 ## MartenDb Setup
 
-Here's how to configure Marten for the first time:
+The initial step is to incorporate a Marten reference into your C# program. By utilizing options, you can seamlessly interact with Marten. A fundamental configuration involves setting up the connection string. 
+
+This setting enables communication with the database and provides access to basic features.
+
 
 ```csharp
 builder.Services.AddMarten(options =>
@@ -64,15 +71,19 @@ builder.Services.AddMarten(options =>
 
 ## Database Interaction
 
-MartenDB offers two ways to communicate with the database:
+Marten equips you with interfaces to communicate effectively with PostgreSQL. Two pivotal concepts are:
 
-- IQuerySession:  for read operations. For more info, check [here](https://martendb.io/documents/querying/linq/)
-- IDocumentStore: for write operations. For more info, check[here](https://martendb.io/documents/sessions.html)
+- IQuerySession: Primarily for read operations, it facilitates querying and mapping objects from PostgreSQL. For further details, refer to the documentation [here](https://martendb.io/documents/querying/linq/).
+
+- IDocumentStore: Geared towards write operations, it provides functionalities for Add/Update/Delete, as well as for initializing Streams and managing events. To explore more, visit the documentation [here](https://martendb.io/documents/sessions.html).
 
 
-### CRUD Endpoints
+## CRUD Endpoints
 
-Sample read:
+
+Here's an example of a simple interaction using IQuerySession. 
+
+The following code retrieves a single CarEntity object saved in the database. As you can observe, it employs a straightforward LINQ-like approach
 
 ```csharp
 app.MapGet("Get/{carId}", async (Guid carId, IQuerySession querySession) =>
@@ -81,7 +92,8 @@ app.MapGet("Get/{carId}", async (Guid carId, IQuerySession querySession) =>
 }).WithOpenApi();
 ```
 
-Sample Write:
+Here's an example of a basic interaction using IDocumentStore. The following code adds an object of CarEntity with default values.
+
 
 ```csharp
 using var session = await store.LightweightSerializableSessionAsync();
@@ -89,21 +101,36 @@ session.Store(new CarEntity() { Id = carId, CurrentPosition = new Location(0, 0)
 await session.SaveChangesAsync();
 ```
 
-### Events
+For a more comprehensive example, please refer to the source code for CRUD endpoints.
 
-Start a stream (a stream cannot start without an event):
+
+## Events Endpoints
+
+Here's an example illustrating how to initiate a stream and enqueue an event using Marten.
+
+Firstly, you initiate a stream for a specific ID, in this case, carId. Then, you proceed to enqueue an event. It's essential to enqueue an event to initiate the stream.
+
+Subsequently, you have the flexibility to enqueue as many events as you desire for that carId. 
+
+It's worth noting that these events don't necessarily have to be of the same class.
+
+StartStream Sample with an initial event:
 
 ```csharp
 session.Events.StartStream(carId, new UpdateLocationRequest() { Latitute = 0, Longitude = 0 }); 
 ```
-enquee event with same id
+
+Once the stream is initiated, you can proceed to enqueue events.
+Sample:
+
 ```csharp
  using var session = await store.LightweightSerializableSessionAsync();
- session.Events.Append(carId, request);
+ session.Events.Append(carId, new UpdateLocationRequest() { Latitute = 1, Longitude = 1 });
  await session.SaveChangesAsync();
 ```
 
-SetUp a simple entity with event connection:
+The CarAggregateEntity includes a method named Apply, which handles a specific event class. Multiple Apply methods can be implemented to manage each event you wish to handle.
+
 
 ```csharp
 public class CarAggregateEntity
@@ -128,28 +155,43 @@ public class CarAggregateEntity
 }
 ```
 
-using AggregateStreamAsync method all events we got the final states:
+By employing the AggregateStreamAsync method on the CarAggregateEntity, all events stored in PostgreSQL will be retrieved, and the Apply method will be invoked.
+
+This approach is commonly known as Live Aggregation because each call to AggregateStreamAsync results in the parsing of all events.
+
+This method is well-suited for classes with fewer events. However, as the number of events increases, performance may degrade. 
+
+Nonetheless, such an approach allows for the addition of data to your entity and the derivation of its state from a series of events.
 
 ```csharp
 await querySession.Events.AggregateStreamAsync<CarAggregateEntity>(carId);
 ```
 
+## Projections
 
-### Projections
+Another crucial concept in event sourcing is projections. Projections follow a pattern akin to materialized views. 
+The idea is to subscribe to certain events and generate a read-only entity based on the data derived from these events.
 
-Projections are responsible for materializing views of the application's state based on the events in the event store. These views represent the current state of specific entities or aspects of the system.
+Projections are responsible for materializing views of the application's state based on the events in the event store. 
+These views represent the current state of specific entities or aspects of the system.
 
-A breaf explaination about Projection Lifecycles in Marten:
+Marten DB provides several methods to manage and interact with projections. 
 
-- Inline Projections are executed at the time of event capture and in the same unit of work to persist the projected documents
-- Live Aggregations are executed on demand by loading event data and creating the projected view in memory without persisting the projected documents
-- Asynchronous Projections are executed by a background process (eventual consistency)
+Here's a brief explanation of Projection Lifecycles in Marten:
+
+- Inline Projections: These are executed at the time of event capture within the same unit of work used to persist the projected documents.
+- Live Aggregations: These are executed on demand by loading event data and creating the projected view in memory, without persisting the projected documents.
+- Asynchronous Projections: These are executed by a background process, ensuring eventual consistency.
 
 More info [here](https://martendb.io/events/projections/)
 
-In this project, there are two sample projections:
 
-CurrentCarPositionEventProjection
+Here's an example of a projection, the class CurrentCarPositionEventProjection contains a method named "Create" which instructs Marten on how to manage the initial state of the car.
+
+Upon inspection of the project, you'll notice that this projection is registered as asynchronous. 
+A Marten daemon takes charge of creating and regularly updating it.
+
+While this approach offers better performance, there's a trade-off in certainty regarding the real-time update of the current car position.
 
 ```csharp
 public class CurrentCarPositionEventProjection : EventProjection
@@ -168,15 +210,16 @@ public class CurrentCarPositionEventProjection : EventProjection
 ```
 
 
-CarMaintenanceEventProjection
+Here's another example showcasing the capabilities of projections. 
+In this instance, the CarMaintenanceEventProjection is tasked with intercepting CarMaintenanceEvent and RemoveCarMaintenance events. 
 
-Use a projection to handle the entity:
+Each time the projection receives an event, it executes a set of operations on the database synchronously.
 
 ```csharp
 public class CarMaintenanceEventProjection : EventProjection
 {
 
-    public async Task Project(CarMaintenanceEvent evt, IDocumentOperations ops)
+    public async Task Project(CarMaintenanceEvent evt, IDocumentOperations ops)line
     {
         var doc = await ops.LoadAsync<CarMaintenaceEntity>(evt.CarId);
         doc ??= new()
@@ -214,7 +257,7 @@ public class CarMaintenanceEventProjection : EventProjection
 }
 ```
 
-How to set up projection on Marten:
+This is the required modification to the initial Marten registration to accommodate projections.
 
 ```csharp
 builder.Services.AddMarten(options =>
