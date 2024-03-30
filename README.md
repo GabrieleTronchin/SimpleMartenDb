@@ -56,12 +56,20 @@ builder.Services.AddMarten(options =>
 
 ## Projects Endpoint
 
+//TODO Add small description
 
 ### CRUD
 
+//TODO Add crud enpoint explaination
+
 ### Events
 
+//TODO Add events enpoint explaination
+
+
 ### Projections
+
+How to setup projection on mattern:
 
 builder.Services.AddMarten(options =>
 {
@@ -72,3 +80,10 @@ builder.Services.AddMarten(options =>
 })
 // Turn on the async daemon in "Solo" mode
 .AddAsyncDaemon(DaemonMode.Solo);
+
+
+//TODO Add explaination about AddAsyncDaemon
+
+//TODO Add sample of projection flow
+
+
