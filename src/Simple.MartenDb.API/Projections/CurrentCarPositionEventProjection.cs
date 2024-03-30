@@ -6,9 +6,9 @@ namespace Simple.MartenDb.API.Projections;
 
 
 
-public class CurrentCarPositionProjection : EventProjection
+public class CurrentCarPositionEventProjection : EventProjection
 {
-    public CurrentCarPositionProjection()
+    public CurrentCarPositionEventProjection()
     {
         ProjectionName = "CarActualLocation";
     }
