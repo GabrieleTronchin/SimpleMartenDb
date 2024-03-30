@@ -21,8 +21,4 @@ public class CarAggregateEntity
         CurrentPosition = new Location(e.Latitute, e.Longitude);
         Traveled += e.Longitude; //just a sample traveled calculation
     }
-
-
-
-
 }

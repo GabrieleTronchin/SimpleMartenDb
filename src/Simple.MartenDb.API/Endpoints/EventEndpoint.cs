@@ -29,7 +29,6 @@ public static class EventEndpoint
             await session.SaveChangesAsync();
         });
 
-
         app.MapGet("LiveAggregation/{carId}", async (Guid carId, IQuerySession querySession) =>
         {
             return await querySession.Events.AggregateStreamAsync<CarAggregateEntity>(carId);
@@ -39,7 +38,6 @@ public static class EventEndpoint
         {
             return await querySession.LoadAsync<CurrentCarPosition>(carId);
         }).WithOpenApi();
-
 
         app.MapPut("CarMaintenance", async ([FromBody] CarMaintenanceEvent request, IDocumentStore store) =>
         {

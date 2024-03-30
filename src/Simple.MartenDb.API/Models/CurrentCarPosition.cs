@@ -1,5 +1,4 @@
-﻿namespace Simple.MartenDb.API.Models
-{
+﻿namespace Simple.MartenDb.API.Models;
 
-    public record CurrentCarPosition(Guid Id, Location Position);
-}
+
+public record CurrentCarPosition(Guid Id, Location Position);
