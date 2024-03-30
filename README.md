@@ -20,9 +20,10 @@ By leveraging MartenDB's event sourcing capabilities, these endpoints demonstrat
 
 ## Event Sourcing
 
-The Event Store pattern is a method used in software architecture to manage the state of an application by recording the full history of events that have occurred. Instead of storing the current state of an object or system, the Event Store maintains a log of all changes or events that have happened over time. These events represent actions or occurrences that have affected the system's state.
+Event Sourcing is a software design pattern that involves capturing all changes to an application's state as a sequence of events. 
+Instead of storing the current state of an entity, Event Sourcing involves storing a log of events that describe the actions or commands that have been applied to that entity over time. 
 
-Event Sourcing is a software design pattern that involves capturing all changes to an application's state as a sequence of events. Instead of storing the current state of an entity, Event Sourcing involves storing a log of events that describe the actions or commands that have been applied to that entity over time. These events are immutable, meaning they cannot be changed once they are recorded.
+These events are immutable, meaning they cannot be changed once they are recorded.
 
 For more details, refer to [Microsoft's documentation on Event Sourcing](https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing).
 
