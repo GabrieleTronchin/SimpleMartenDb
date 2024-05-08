@@ -11,16 +11,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddMarten(options =>
-{
-    const string connectionString = "host=localhost;port=5432;database=cars;username=sa;password=MySecretPassword1234;";
-    options.Connection(connectionString);
-    options.Projections.Add(new CarMaintenanceEventProjection(), ProjectionLifecycle.Inline);
-    options.Projections.Add(new CurrentCarPositionEventProjection(), ProjectionLifecycle.Async);
-})
-// Turn on the async daemon in "Solo" mode
-.AddAsyncDaemon(DaemonMode.Solo);
-
+builder
+    .Services.AddMarten(options =>
+    {
+        const string connectionString =
+            "host=localhost;port=5432;database=cars;username=sa;password=MySecretPassword1234;";
+        options.Connection(connectionString);
+        options.Projections.Add(new CarMaintenanceEventProjection(), ProjectionLifecycle.Inline);
+        options.Projections.Add(new CurrentCarPositionEventProjection(), ProjectionLifecycle.Async);
+    })
+    // Turn on the async daemon in "Solo" mode
+    .AddAsyncDaemon(DaemonMode.Solo);
 
 var app = builder.Build();
 

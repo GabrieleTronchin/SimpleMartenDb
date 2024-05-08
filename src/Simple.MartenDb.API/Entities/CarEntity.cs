@@ -2,7 +2,6 @@
 
 public class CarEntity
 {
-
     public Guid Id { get; set; }
 
     public Location? InitialPosition { get; set; }
@@ -10,5 +9,4 @@ public class CarEntity
     public Location CurrentPosition { get; set; }
 
     public int Traveled { get; set; }
-
 }
