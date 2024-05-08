@@ -4,7 +4,6 @@ namespace Simple.MartenDb.API.Entities;
 
 public class CarAggregateEntity
 {
-
     public Guid Id { get; set; }
 
     public Location? InitialPosition { get; set; }

@@ -1,2 +1,1 @@
-﻿
-public record Location(int Latitude, int Longitude);
+﻿public record Location(int Latitude, int Longitude);
